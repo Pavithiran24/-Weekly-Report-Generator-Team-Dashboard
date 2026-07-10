@@ -6,7 +6,7 @@ import Spinner from '../../components/ui/Spinner';
 import Skeleton from '../../components/ui/Skeleton';
 import { reportsApi } from '../../api/reportsApi';
 import { Link } from 'react-router-dom';
-import { Download, FileDown } from 'lucide-react';
+import { Download, FileDown, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 
 function escapeCsvValue(value) {
@@ -26,6 +26,8 @@ function downloadBlob(filename, content, mimeType) {
 export default function ReportHistory() {
   const [reports, setReports] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isExportingCsv, setIsExportingCsv] = useState(false);
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
 
   useEffect(() => {
     reportsApi.getAll().then(res => {
@@ -33,50 +35,62 @@ export default function ReportHistory() {
     }).catch(console.error).finally(() => setIsLoading(false));
   }, []);
 
-  const exportCsv = () => {
-    const header = ['Week Start', 'Week End', 'Project ID', 'Hours', 'Status'];
-    const rows = reports.map((report) => [
-      report.week_start,
-      report.week_end,
-      report.project_id,
-      report.hours_worked,
-      report.status,
-    ]);
-
-    const csv = [header, ...rows]
-      .map((row) => row.map(escapeCsvValue).join(','))
-      .join('\n')
-
-    downloadBlob(`my-reports-${format(new Date(), 'yyyyMMdd-HHmm')}.csv`, csv, 'text/csv;charset=utf-8;')
-  }
-
-  const exportPdf = async () => {
-    const { default: jsPDF } = await import('jspdf')
-    const { default: autoTable } = await import('jspdf-autotable')
-
-    const doc = new jsPDF('p', 'mm', 'a4')
-    doc.setFontSize(16)
-    doc.text('My Reports', 14, 16)
-    doc.setFontSize(10)
-    doc.setTextColor(100)
-    doc.text(`Generated on ${format(new Date(), 'PPP p')}`, 14, 22)
-
-    autoTable(doc, {
-      startY: 28,
-      head: [['Week Start', 'Week End', 'Project ID', 'Hours', 'Status']],
-      body: reports.map((report) => [
+  const exportCsv = async () => {
+    setIsExportingCsv(true)
+    try {
+      const header = ['Week Start', 'Week End', 'Project ID', 'Hours', 'Status'];
+      const rows = reports.map((report) => [
         report.week_start,
         report.week_end,
         report.project_id,
         report.hours_worked,
-        report.status.toUpperCase(),
-      ]),
-      theme: 'grid',
-      headStyles: { fillColor: [37, 99, 235] },
-      styles: { fontSize: 9 },
-    })
+        report.status,
+      ]);
 
-    doc.save(`my-reports-${format(new Date(), 'yyyyMMdd-HHmm')}.pdf`)
+      const csv = [header, ...rows]
+        .map((row) => row.map(escapeCsvValue).join(','))
+        .join('\n')
+
+      downloadBlob(`my-reports-${format(new Date(), 'yyyyMMdd-HHmm')}.csv`, csv, 'text/csv;charset=utf-8;')
+      await new Promise((resolve) => window.setTimeout(resolve, 450))
+    } finally {
+      setIsExportingCsv(false)
+    }
+  }
+
+  const exportPdf = async () => {
+    setIsExportingPdf(true)
+    try {
+      const { default: jsPDF } = await import('jspdf')
+      const { default: autoTable } = await import('jspdf-autotable')
+
+      const doc = new jsPDF('p', 'mm', 'a4')
+      doc.setFontSize(16)
+      doc.text('My Reports', 14, 16)
+      doc.setFontSize(10)
+      doc.setTextColor(100)
+      doc.text(`Generated on ${format(new Date(), 'PPP p')}`, 14, 22)
+
+      autoTable(doc, {
+        startY: 28,
+        head: [['Week Start', 'Week End', 'Project ID', 'Hours', 'Status']],
+        body: reports.map((report) => [
+          report.week_start,
+          report.week_end,
+          report.project_id,
+          report.hours_worked,
+          report.status.toUpperCase(),
+        ]),
+        theme: 'grid',
+        headStyles: { fillColor: [37, 99, 235] },
+        styles: { fontSize: 9 },
+      })
+
+      doc.save(`my-reports-${format(new Date(), 'yyyyMMdd-HHmm')}.pdf`)
+      await new Promise((resolve) => window.setTimeout(resolve, 600))
+    } finally {
+      setIsExportingPdf(false)
+    }
   }
 
   return (
@@ -87,13 +101,23 @@ export default function ReportHistory() {
           <p className="text-gray-400">View all your past reports.</p>
         </div>
         <div className="toolbar-entrance flex flex-wrap gap-3">
-          <button type="button" onClick={exportCsv} className="btn-secondary inline-flex items-center gap-2">
-            <Download className="h-4 w-4" />
-            Export CSV
+          <button
+            type="button"
+            onClick={exportCsv}
+            disabled={isExportingCsv || isExportingPdf}
+            className={`btn-secondary inline-flex items-center gap-2 ${isExportingCsv ? 'download-feedback animate-pulse' : ''}`}
+          >
+            {isExportingCsv ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            {isExportingCsv ? 'Generating CSV...' : 'Export CSV'}
           </button>
-          <button type="button" onClick={exportPdf} className="btn-primary inline-flex items-center gap-2">
-            <FileDown className="h-4 w-4" />
-            Export PDF
+          <button
+            type="button"
+            onClick={exportPdf}
+            disabled={isExportingCsv || isExportingPdf}
+            className={`btn-primary inline-flex items-center gap-2 ${isExportingPdf ? 'download-feedback animate-pulse' : ''}`}
+          >
+            {isExportingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
+            {isExportingPdf ? 'Generating PDF...' : 'Export PDF'}
           </button>
         </div>
       </div>
