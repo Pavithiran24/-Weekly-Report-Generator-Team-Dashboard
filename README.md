@@ -323,3 +323,11 @@ react, react-dom, react-router-dom, axios, recharts,
 react-hot-toast, lucide-react, date-fns,
 tailwindcss, postcss, autoprefixer
 ```
+
+---
+
+## ✅ Recent Updates
+
+- Added dark/light theme support with a default dark theme.
+- Added export actions for PDF and CSV on report pages.
+- Added a welcome popup and responsive mobile navigation improvements.
