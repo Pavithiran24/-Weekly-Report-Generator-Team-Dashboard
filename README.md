@@ -242,6 +242,23 @@ The frontend will be available at: **http://localhost:5173**
 - `user_id` — filter by user (manager only)
 - `status` — `draft` | `submitted` | `reviewed`
 
+### AI Assistant
+| Method | Endpoint | Description | Role |
+|--------|----------|-------------|------|
+| POST | `/api/assistant/chat` | Conversational manager assistant over stored reports | Manager |
+
+#### Implementation Notes
+- The assistant is manager-only and reads from the existing report dataset.
+- It uses a local summary engine by default.
+- If `OPENAI_API_KEY` is configured, it can call an external LLM for richer answers.
+- The frontend chat widget lives on the manager dashboard and includes quick prompts for weekly summary, blockers, and workload questions.
+
+#### Prompt and Privacy
+- System prompt: answer only from stored report data, stay concise, and do not invent facts.
+- The assistant sends only the current user message plus a short local conversation history.
+- No sensitive secrets are embedded in the frontend; the model key stays in backend environment variables.
+- For deployment, keep the backend API private and audit any external LLM usage before enabling it in production.
+
 ---
 
 ## ✨ Features

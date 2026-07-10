@@ -9,6 +9,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   PieChart, Pie, Cell, BarChart, Bar 
 } from 'recharts';
+import ChatAssistantWidget from '../../components/assistant/ChatAssistantWidget';
 
 const COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444'];
 
@@ -272,6 +273,8 @@ export default function ManagerDashboard() {
           </div>
         </Card>
       </div>
+
+      <ChatAssistantWidget />
     </AppLayout>
   );
 }

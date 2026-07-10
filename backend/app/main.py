@@ -10,7 +10,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from app.database import Base, SessionLocal, engine
-from app.routers import auth, dashboard, projects, reports, users
+from app.routers import assistant, auth, dashboard, projects, reports, users
 
 
 @asynccontextmanager
@@ -63,6 +63,7 @@ app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(projects.router)
 app.include_router(reports.router)
+app.include_router(assistant.router)
 app.include_router(dashboard.router)
 
 
