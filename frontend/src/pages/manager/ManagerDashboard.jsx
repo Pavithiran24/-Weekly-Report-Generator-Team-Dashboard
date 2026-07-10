@@ -4,7 +4,7 @@ import Card from '../../components/ui/Card';
 import Spinner from '../../components/ui/Spinner';
 import { reportsApi } from '../../api/reportsApi';
 import { projectsApi } from '../../api/projectsApi';
-import { FileText, Clock, CheckCircle, AlertOctagon } from 'lucide-react';
+import { FileText, Clock, CheckCircle, AlertOctagon, AlertTriangle, TrendingUp, ClipboardList } from 'lucide-react';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   PieChart, Pie, Cell, BarChart, Bar 
@@ -81,11 +81,48 @@ export default function ManagerDashboard() {
     .sort((a, b) => new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at))
     .slice(0, 5);
 
+  const blockerReports = reports.filter((report) => report.blockers && report.blockers.trim().length > 0).slice(0, 3);
+  const draftRate = stats.total ? Math.round((stats.pending / stats.total) * 100) : 0;
+  const topProjectEntry = Object.entries(projDistMap).sort((a, b) => b[1] - a[1])[0];
+
   return (
     <AppLayout>
-      <div className="mb-8">
+      <div className="mb-8 animate-fade-in">
         <h1 className="text-3xl font-bold text-white mb-2">Manager Dashboard</h1>
         <p className="text-gray-400">Team performance and reporting analytics.</p>
+      </div>
+
+      <div className="mb-8 grid gap-4 lg:grid-cols-3">
+        <Card className="toolbar-entrance border border-blue-500/20 bg-blue-500/10">
+          <div className="flex items-start gap-4">
+            <div className="rounded-xl bg-blue-500/20 p-3 text-blue-300"><TrendingUp size={22} /></div>
+            <div>
+              <p className="text-sm text-blue-200">Draft rate</p>
+              <h3 className="mt-1 text-2xl font-bold text-white">{draftRate}%</h3>
+              <p className="mt-1 text-sm text-blue-100/80">{stats.pending} drafts need attention from the team.</p>
+            </div>
+          </div>
+        </Card>
+        <Card className="toolbar-entrance border border-purple-500/20 bg-purple-500/10">
+          <div className="flex items-start gap-4">
+            <div className="rounded-xl bg-purple-500/20 p-3 text-purple-300"><ClipboardList size={22} /></div>
+            <div>
+              <p className="text-sm text-purple-200">Top project</p>
+              <h3 className="mt-1 text-2xl font-bold text-white">{topProjectEntry?.[0] || 'No data'}</h3>
+              <p className="mt-1 text-sm text-purple-100/80">{topProjectEntry ? `${topProjectEntry[1]} logged hours` : 'Start collecting reports to see trends.'}</p>
+            </div>
+          </div>
+        </Card>
+        <Card className="toolbar-entrance border border-amber-500/20 bg-amber-500/10">
+          <div className="flex items-start gap-4">
+            <div className="rounded-xl bg-amber-500/20 p-3 text-amber-300"><AlertTriangle size={22} /></div>
+            <div>
+              <p className="text-sm text-amber-200">Open blocker reports</p>
+              <h3 className="mt-1 text-2xl font-bold text-white">{stats.blockers}</h3>
+              <p className="mt-1 text-sm text-amber-100/80">These reports need follow-up before review.</p>
+            </div>
+          </div>
+        </Card>
       </div>
 
       {/* Cards */}
@@ -201,6 +238,39 @@ export default function ManagerDashboard() {
           </div>
         </Card>
 
+      </div>
+
+      <div className="mt-8 grid gap-6 lg:grid-cols-2">
+        <Card className="toolbar-entrance">
+          <h3 className="text-lg font-bold text-white mb-4">Action reminders</h3>
+          <div className="space-y-3 text-sm text-gray-300">
+            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+              <p className="font-semibold text-white">Pending drafts</p>
+              <p className="mt-1 text-gray-400">{stats.pending} reports are still in draft. Ask the team to finalize them before review.</p>
+            </div>
+            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+              <p className="font-semibold text-white">Reports with blockers</p>
+              <p className="mt-1 text-gray-400">{blockerReports.length} of the latest reports contain blockers and need follow-up comments.</p>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="toolbar-entrance">
+          <h3 className="text-lg font-bold text-white mb-4">Needs attention</h3>
+          <div className="space-y-3">
+            {blockerReports.length === 0 ? (
+              <p className="text-sm text-gray-400">No blocker reports right now.</p>
+            ) : blockerReports.map((report) => (
+              <div key={report.id} className="flex items-start justify-between gap-3 rounded-xl border border-white/10 bg-white/5 p-4">
+                <div>
+                  <p className="font-medium text-white">User #{report.user_id}</p>
+                  <p className="mt-1 text-sm text-gray-400">Project: {projects[report.project_id] || report.project_id} | Week of {report.week_start}</p>
+                </div>
+                <AlertOctagon className="mt-0.5 text-red-400" size={18} />
+              </div>
+            ))}
+          </div>
+        </Card>
       </div>
     </AppLayout>
   );

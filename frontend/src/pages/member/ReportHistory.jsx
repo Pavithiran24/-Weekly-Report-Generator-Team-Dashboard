@@ -28,6 +28,8 @@ export default function ReportHistory() {
   const [isLoading, setIsLoading] = useState(true);
   const [isExportingCsv, setIsExportingCsv] = useState(false);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
 
   useEffect(() => {
     reportsApi.getAll().then(res => {
@@ -35,11 +37,25 @@ export default function ReportHistory() {
     }).catch(console.error).finally(() => setIsLoading(false));
   }, []);
 
+  const filteredReports = reports.filter((report) => {
+    const query = searchTerm.trim().toLowerCase();
+    const matchesSearch = !query
+      || String(report.project_id).includes(query)
+      || String(report.week_start).includes(query)
+      || String(report.week_end).includes(query)
+      || String(report.status).toLowerCase().includes(query)
+      || String(report.hours_worked ?? '').includes(query);
+
+    const matchesStatus = statusFilter === 'all' || report.status === statusFilter;
+
+    return matchesSearch && matchesStatus;
+  });
+
   const exportCsv = async () => {
     setIsExportingCsv(true)
     try {
       const header = ['Week Start', 'Week End', 'Project ID', 'Hours', 'Status'];
-      const rows = reports.map((report) => [
+      const rows = filteredReports.map((report) => [
         report.week_start,
         report.week_end,
         report.project_id,
@@ -74,7 +90,7 @@ export default function ReportHistory() {
       autoTable(doc, {
         startY: 28,
         head: [['Week Start', 'Week End', 'Project ID', 'Hours', 'Status']],
-        body: reports.map((report) => [
+        body: filteredReports.map((report) => [
           report.week_start,
           report.week_end,
           report.project_id,
@@ -121,6 +137,28 @@ export default function ReportHistory() {
           </button>
         </div>
       </div>
+      <div className="toolbar-entrance mb-6 grid gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 lg:grid-cols-[1fr_auto]">
+        <input
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Search by project, week, status, or hours..."
+          className="input-field"
+        />
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="input-field lg:w-56"
+        >
+          <option value="all">All statuses</option>
+          <option value="draft">Draft</option>
+          <option value="submitted">Submitted</option>
+          <option value="reviewed">Reviewed</option>
+        </select>
+      </div>
+      <div className="mb-6 flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-gray-300">
+        <span>Showing {filteredReports.length} of {reports.length} reports</span>
+        <span>{statusFilter === 'all' ? 'All statuses' : statusFilter.toUpperCase()}</span>
+      </div>
       
       {isLoading ? (
         <div className="grid gap-4">
@@ -143,9 +181,9 @@ export default function ReportHistory() {
                   </tr>
                 </thead>
                 <tbody>
-                  {reports.length === 0 ? (
+                  {filteredReports.length === 0 ? (
                     <tr><td colSpan="5" className="px-6 py-4 text-center">No reports found.</td></tr>
-                  ) : reports.map(r => (
+                  ) : filteredReports.map(r => (
                     <tr key={r.id} className="border-b border-white/5 hover:bg-white/5">
                       <td className="px-6 py-4 font-medium text-white">{r.week_start} to {r.week_end}</td>
                       <td className="px-6 py-4">{r.project_id}</td>
@@ -171,11 +209,11 @@ export default function ReportHistory() {
           </div>
 
           <div className="grid gap-4 md:hidden">
-            {reports.length === 0 ? (
+            {filteredReports.length === 0 ? (
               <Card>
                 <p className="py-4 text-center text-gray-400">No reports found.</p>
               </Card>
-            ) : reports.map((r) => (
+            ) : filteredReports.map((r) => (
               <Card key={r.id} className="space-y-3">
                 <div className="flex items-start justify-between gap-3">
                   <div>

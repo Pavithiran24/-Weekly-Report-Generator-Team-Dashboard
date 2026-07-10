@@ -5,7 +5,7 @@ import Badge from '../../components/ui/Badge';
 import Spinner from '../../components/ui/Spinner';
 import Skeleton from '../../components/ui/Skeleton';
 import { reportsApi } from '../../api/reportsApi';
-import { FileText, Clock, CheckCircle } from 'lucide-react';
+import { FileText, Clock, CheckCircle, Bell, CalendarCheck2, AlertCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function MemberDashboard() {
@@ -75,11 +75,41 @@ export default function MemberDashboard() {
     )
   }
 
+  const latestDraft = recentReports.find((report) => report.status === 'draft');
+  const totalHours = stats.hours;
+  const submittedRate = stats.total ? Math.round((stats.submitted / stats.total) * 100) : 0;
+  const reminderText = latestDraft
+    ? `You have a draft for the week of ${latestDraft.week_start}. Finish and submit it before the review deadline.`
+    : 'Great job. No unfinished drafts are waiting right now.';
+
   return (
     <AppLayout>
-      <div className="mb-8">
+      <div className="mb-8 animate-fade-in">
         <h1 className="text-3xl font-bold text-white mb-2">My Dashboard</h1>
         <p className="text-gray-400">Overview of your weekly reports and activity.</p>
+      </div>
+
+      <div className="mb-8 grid gap-4 lg:grid-cols-[1.3fr_0.7fr]">
+        <Card className="toolbar-entrance border border-cyan-500/20 bg-cyan-500/10">
+          <div className="flex items-start gap-4">
+            <div className="rounded-xl bg-cyan-500/20 p-3 text-cyan-300"><Bell size={22} /></div>
+            <div>
+              <p className="text-sm text-cyan-200">Weekly reminder</p>
+              <h3 className="mt-1 text-xl font-bold text-white">Stay on top of your report</h3>
+              <p className="mt-2 text-sm text-cyan-100/80">{reminderText}</p>
+            </div>
+          </div>
+        </Card>
+        <Card className="toolbar-entrance border border-emerald-500/20 bg-emerald-500/10">
+          <div className="flex items-start gap-4">
+            <div className="rounded-xl bg-emerald-500/20 p-3 text-emerald-300"><CalendarCheck2 size={22} /></div>
+            <div>
+              <p className="text-sm text-emerald-200">Completion rate</p>
+              <h3 className="mt-1 text-2xl font-bold text-white">{submittedRate}%</h3>
+              <p className="mt-1 text-sm text-emerald-100/80">{totalHours} hours logged across your reports.</p>
+            </div>
+          </div>
+        </Card>
       </div>
 
       <div className="grid grid-cols-1 gap-6 mb-8 md:grid-cols-2 xl:grid-cols-4">
@@ -156,6 +186,29 @@ export default function MemberDashboard() {
             </Card>
           ))
         )}
+      </div>
+
+      <div className="mt-8 grid gap-6 lg:grid-cols-2">
+        <Card className="toolbar-entrance">
+          <h3 className="text-lg font-bold text-white mb-4">Quick actions</h3>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Link to="/reports/create" className="btn-primary text-center">Create report</Link>
+            <Link to="/reports/history" className="btn-secondary text-center">View history</Link>
+          </div>
+        </Card>
+        <Card className="toolbar-entrance">
+          <h3 className="text-lg font-bold text-white mb-4">Status summary</h3>
+          <div className="space-y-3 text-sm text-gray-300">
+            <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+              <span className="flex items-center gap-2 text-white"><AlertCircle size={16} className="text-yellow-400" /> Drafts waiting</span>
+              <span>{stats.drafts}</span>
+            </div>
+            <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+              <span className="flex items-center gap-2 text-white"><CheckCircle size={16} className="text-green-400" /> Submitted</span>
+              <span>{stats.submitted}</span>
+            </div>
+          </div>
+        </Card>
       </div>
     </AppLayout>
   );
